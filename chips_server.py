@@ -257,27 +257,42 @@ label{font-size:13px;color:var(--mut)}
 .bar.big{background:#0a4a3a}
 .val{text-align:right;font-variant-numeric:tabular-nums;color:#333}
 .tlbl{text-align:right;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hmwrap{overflow-x:auto}
+.hmwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .legend{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--mut);margin:8px 0}
 .sw{display:inline-block;width:44px;height:12px;border-radius:2px}
 .kv{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:#333;margin-top:8px}
 .kv b{color:var(--accent)}
 #saved button{padding:4px 10px;margin:0 6px 6px 0;font-size:13px}
-table.fav{border-collapse:collapse;width:100%;font-size:13px;margin-top:6px}
-table.fav th,table.fav td{border-bottom:1px solid #eee;padding:5px 8px;text-align:right}
+.favscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.fav{border-collapse:collapse;min-width:520px;font-size:13px;margin-top:6px}
+table.fav th,table.fav td{border-bottom:1px solid #eee;padding:5px 8px;text-align:right;white-space:nowrap}
 table.fav th:first-child,table.fav td:first-child{text-align:left}
 .up{color:#c0392b;font-weight:600}.down{color:#0F6E56;font-weight:600}
 a.favlink{color:var(--accent);text-decoration:none}
 details{margin-top:8px}
+@media(max-width:600px){
+  .wrap{padding:12px 10px 50px}
+  h1{font-size:18px}
+  h2{font-size:15px;margin:20px 0 6px}
+  .card{padding:10px 12px}
+  .barrow{grid-template-columns:88px 1fr 46px;font-size:11px;gap:5px}
+  #meta{font-size:14px;padding:3px 10px}
+  .ctl{gap:7px}
+  input,select,button{padding:7px 10px;font-size:14px}
+  #saved button{font-size:12px}
+  .sub{font-size:12px}
+  .kv{font-size:12px;gap:10px}
+  label{font-size:12px}
+}
 </style></head><body><div class="wrap">
 <h1>集保籌碼瀏覽器</h1>
 <div class="sub">輸入代號即時產生:z-score 熱力圖 + 各級距占比 + 焦點疊股價。點熱力圖任一格,下方兩張圖會跳到該週、該級距。</div>
 <div class="card">
   <div class="ctl">
-    <input id="code" placeholder="股票代號 例 6291" style="width:170px">
+    <input id="code" placeholder="代號 例 6291" style="width:140px">
     <button id="go">查詢</button>
-    <label><input type="checkbox" id="fc"> 強制重新抓取(更新到最新週)</label>
-    <span id="status" style="margin-left:6px;font-size:13px;color:#555"></span>
+    <label><input type="checkbox" id="fc"> 強制重新抓取</label>
+    <span id="status" style="margin-left:4px;font-size:13px;color:#555"></span>
   </div>
   <div><span style="font-size:13px;color:#6b6b6b">已查過:</span> <span id="saved"></span> <button id="refall" style="display:none"></button></div>
 </div>
@@ -321,7 +336,9 @@ details{margin-top:8px}
 </div>
 </div>
 <script>
-let P=null,CURM='pct',SELT=10,SELW=0,W=0,CW=11,FAVSET=new Set();
+let P=null,CURM='pct',SELT=10,SELW=0,W=0,CW=11,X0=120,FAVSET=new Set();
+function calcDims(){const cw=el('hmwrap_inner')||el('hm');const mob=window.innerWidth<600;X0=mob?82:120;const avail=(cw?cw.clientWidth:window.innerWidth)-(mob?22:32);CW=Math.max(5,Math.min(13,Math.floor((avail-X0)/Math.max(W,1))));}
+
 const el=id=>document.getElementById(id);
 async function loadStock(code,force){
   code=(code||'').trim(); if(!code) return;
@@ -357,9 +374,9 @@ async function loadFav(){
     FAVSET=new Set((j.active||[]).map(o=>o.stock));
     const a=j.active||[];
     if(!a.length){el('favbox').innerHTML='<span style="color:#999;font-size:13px">尚無,查一檔後按「加入最愛」</span>';}
-    else{let h='<table class="fav"><tr><th>標的</th><th>加入日</th><th>加入價</th><th>現價</th><th>報酬</th><th></th></tr>';
+    else{let h='<div class="favscroll"><table class="fav"><tr><th>標的</th><th>加入日</th><th>加入價</th><th>現價</th><th>報酬</th><th></th></tr>';
       a.forEach(o=>{h+='<tr><td><a href="#" class="favlink" data-s="'+o.stock+'">'+o.stock+' '+(o.name||'')+'</a></td><td>'+(o.add_date||'').slice(0,10)+'</td><td>'+(o.add_price!=null?o.add_price:'—')+'</td><td>'+(o.cur_price!=null?o.cur_price:'—')+'</td><td>'+pctSpan(o.ret)+'</td><td><button data-rm="'+o.stock+'" style="padding:2px 8px;font-size:12px">移除</button></td></tr>';});
-      h+='</table>';el('favbox').innerHTML=h;
+      h+='</table></div>';el('favbox').innerHTML=h;
       el('favbox').querySelectorAll('.favlink').forEach(e=>e.onclick=ev=>{ev.preventDefault();loadStock(e.dataset.s,false);});
       el('favbox').querySelectorAll('[data-rm]').forEach(e=>e.onclick=async()=>{e.disabled=true;await fetch('/api/fav/remove?stock='+encodeURIComponent(e.dataset.rm));loadFav();});}
     const c=j.closed||[];
@@ -372,7 +389,7 @@ async function loadFav(){
 }
 function updateStar(){const b=el('star');if(!P){b.style.display='none';return;}b.style.display='';b.textContent=FAVSET.has(P.stock)?'★ 移除最愛':'☆ 加入最愛';}
 function renderAll(){
-  W=P.labels.length; CW=Math.max(7,Math.min(13,Math.floor(760/W)));
+  W=P.labels.length; calcDims();
   SELW=W-1; if(SELT>14)SELT=10;
   el('meta').textContent=P.stock+' '+(P.name||'')+'　'+P.labels[0]+' ~ '+P.labels[W-1]+'　共 '+W+' 週';
   const f=P.PCT[W-1],g=(a,b)=>f.slice(a,b).reduce((x,y)=>x+y,0);
@@ -398,7 +415,7 @@ function col(z){const a=Math.min(Math.abs(z)/2.2,1);if(Math.abs(z)<1e-6)return'#
   return z>0?'rgba(216,90,48,'+(a*0.9).toFixed(2)+')':'rgba(24,95,165,'+(a*0.9).toFixed(2)+')';}
 function drawHM(){
   const M=CURM==='pct'?P.PCT:P.PPL,z=zmat(M);
-  let h='<div style="display:grid;grid-template-columns:120px repeat('+W+','+CW+'px);gap:1px;align-items:center;font-size:11px">';
+  let h='<div style="display:grid;grid-template-columns:'+X0+'px repeat('+W+','+CW+'px);gap:1px;align-items:center;font-size:11px">';
   for(let t=0;t<15;t++){const selRow=(t===SELT);
     h+='<div class="tlbl" data-t="'+t+'" style="padding-right:6px;cursor:pointer;'+(selRow?'color:#0F6E56;font-weight:600':'')+'">'+(selRow?'▸ ':'')+P.LBL[t]+'</div>';
     for(let w=0;w<W;w++){const raw=M[w][t];let stl='height:19px;border-radius:2px;cursor:pointer;background:'+col(z[t][w]);
@@ -430,7 +447,7 @@ function fmtP(v){return v>=100?Math.round(v).toLocaleString():v.toFixed(1);}
 function drawPrice(){
   const box=el('pxstrip');
   if(!P.PX||!el('pxck').checked){box.innerHTML='';return;}
-  const x0=120,pitch=CW+1,w=x0+W*pitch,h=92,top=10,bot=18;
+  const x0=X0,pitch=CW+1,w=x0+W*pitch,h=92,top=10,bot=18;
   const X=i=>x0+i*pitch+CW/2,Yfn=fr=>top+(h-top-bot)*(1-fr);
   const pl=priceLine(X,Yfn);if(!pl){box.innerHTML='';return;}
   let s='<svg width="'+w+'" height="'+h+'" style="display:block">';
@@ -444,7 +461,7 @@ function drawPrice(){
 }
 function drawFocus(){
   const box=el('focus');
-  const x0=120,pitch=CW+1,w=x0+W*pitch,h=150,top=28,bot=24;
+  const x0=X0,pitch=CW+1,w=x0+W*pitch,h=150,top=28,bot=24;
   const z=zmat(CURM==='pct'?P.PCT:P.PPL)[SELT];
   const zmax=Math.max(2.2,...z.map(v=>Math.abs(v)));
   const X=i=>x0+i*pitch+CW/2,Yz=v=>top+(h-top-bot)*(1-(v+zmax)/(2*zmax)),Yfn=fr=>top+(h-top-bot)*(1-fr);
@@ -481,6 +498,7 @@ el('refall').onclick=async()=>{
   el('status').textContent='✓ 已更新 '+list.length+' 檔';el('refall').disabled=false;loadSaved();
 };
 loadSaved(); loadFav();
+let _rt;window.addEventListener('resize',()=>{clearTimeout(_rt);_rt=setTimeout(()=>{if(P){calcDims();drawHM();drawPrice();drawFocus();}},200);});
 </script></body></html>"""
 
 def main():
