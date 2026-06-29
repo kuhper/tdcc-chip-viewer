@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: tdcc-chip-viewer
+    runtime: python
+    plan: free
+    startCommand: python chips_server.py
+    envVars:
+      - key: APP_PASSWORD     # 設一組密碼保護你的網頁(必設!)
+        sync: false
+      # - key: DATA_DIR       # 若掛了持久磁碟,指向它以保留 favorites/快取
+      #   value: /var/data

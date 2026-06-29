@@ -1,0 +1,2 @@
+# 本專案只用 Python 標準庫,無第三方相依。
+# 此檔留空是為了讓 Render/Railway 等平台偵測為 Python 專案。

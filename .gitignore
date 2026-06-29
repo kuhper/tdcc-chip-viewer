@@ -1,0 +1,7 @@
+# 個人資料與快取,不要上傳
+chips_cache/
+favorites.json
+chips_*.html
+__pycache__/
+*.pyc
+.DS_Store
